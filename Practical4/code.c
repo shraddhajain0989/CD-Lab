@@ -22,7 +22,8 @@ Concept:
 Predictive parsing is a top-down parsing technique.
 It uses:
 - A stack
-- An input buffer
+- An input bufferCtrl + `
+
 - Grammar rules
 - One lookahead symbol (LL(1))
 

@@ -1,73 +1,144 @@
 /*
--------------------------------------------------
-Practical No. 5
-Aim: To implement Recursive Descent Parsing in C
--------------------------------------------------
+------------------------------------------------------------
+Practical No. 6
+Aim:
+To implement Operator Precedence Parsing in C.
+------------------------------------------------------------
 
-Grammar:
-E  -> i E'
-E' -> + i E' | ε
+Theory:
+Operator Precedence Parsing is a bottom-up parsing technique
+used for expression grammars where operators and operands
+have defined precedence and associativity.
 
-Valid Strings:
-i$
-i+i$
-i+i+i$
+This parser works using:
+- Operator precedence table
+- Stack
+- Shift and Reduce operations
 
--------------------------------------------------
+It:
+- Handles expressions like i+i*i
+- Uses precedence rules to decide parsing actions
+- Is suitable for expression-based grammars
+
+------------------------------------------------------------
+
+Grammar Used:
+E → E + E
+E → E * E
+E → i
+
+Where:
+i  → identifier
++  → addition operator
+*  → multiplication operator
+$  → end marker
+
+Operator Precedence:
+*  >  +
+
+------------------------------------------------------------
+
+Algorithm:
+1. Initialize stack with '$'
+2. Append '$' to the input string
+3. Repeat until stack and input both contain '$':
+   - Compare precedence of stack top and input symbol
+   - If stack precedence < input precedence → Shift
+   - If stack precedence > input precedence → Reduce
+   - If both are '$' → Accept
+4. Otherwise → Reject
+
+------------------------------------------------------------
+
+Sample Input:
+i+i*i$
+
+Sample Output:
+Accept
+
+------------------------------------------------------------
 */
 
 #include <stdio.h>
+#include <string.h>
 
-/* Input string */
-char input[20];
-
-/* Pointer to current input symbol */
-int pos = 0;
-
-/* Error flag */
-int invalid = 0;
+/* Stack for parsing */
+char stack[20];
+int top = -1;
 
 /* Function declarations */
-void E();
-void Eprime();
+void push(char);
+void pop();
+char precedence(char, char);
 
 int main() {
-    printf("Enter input string (end with $): ");
+    char input[20];
+    int i = 0;
+    char a, b;
+
+    printf("Enter the input string (end with $): ");
     scanf("%s", input);
 
-    /* Start parsing from start symbol */
-    E();
+    /* Initialize stack with $ */
+    push('$');
 
-    /* Final check */
-    if (input[pos] == '$' && invalid == 0)
-        printf("Valid String\n");
-    else
-        printf("Invalid String\n");
+    printf("\nStack\tInput\tAction\n");
+
+    while (1) {
+        a = stack[top];     // Top of stack
+        b = input[i];       // Current input symbol
+
+        printf("%s\t%s\t", stack, &input[i]);
+
+        if (a == '$' && b == '$') {
+            printf("Accept\n");
+            break;
+        }
+
+        if (precedence(a, b) == '<' || precedence(a, b) == '=') {
+            push(b);
+            i++;
+            printf("Shift\n");
+        }
+        else if (precedence(a, b) == '>') {
+            pop();
+            printf("Reduce\n");
+        }
+        else {
+            printf("Error\n");
+            break;
+        }
+    }
 
     return 0;
 }
 
-/* Implements grammar rule: E -> i E' */
-void E() {
-    if (input[pos] == 'i') {
-        pos++;          // consume 'i'
-        Eprime();       // call E'
-    } else {
-        invalid = 1;    // invalid start
-    }
+/* Push operation */
+void push(char c) {
+    stack[++top] = c;
+    stack[top + 1] = '\0';
 }
 
-/* Implements grammar rule: E' -> + i E' | ε */
-void Eprime() {
-    if (input[pos] == '+') {
-        pos++;          // consume '+'
+/* Pop operation */
+void pop() {
+    top--;
+    stack[top + 1] = '\0';
+}
 
-        if (input[pos] == 'i') {
-            pos++;      // consume 'i'
-            Eprime();   // recursive call
-        } else {
-            invalid = 1;  // '+' not followed by 'i'
-        }
-    }
-    /* else epsilon (do nothing) */
+/* Operator precedence function */
+char precedence(char a, char b) {
+    if (a == '$' && b == '$') return '=';
+    if (a == '$') return '<';
+    if (b == '$') return '>';
+
+    if (a == 'i' && b == 'i') return ' ';
+    if (a == 'i') return '>';
+    if (b == 'i') return '<';
+
+    if (a == '+' && b == '+') return '>';
+    if (a == '+' && b == '*') return '<';
+    if (a == '*' && b == '+') return '>';
+    if (a == '*' && b == '*') return '>';
+
+    return ' ';
 }
